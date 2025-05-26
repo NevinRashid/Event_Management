@@ -3,6 +3,8 @@
 namespace App\Http\Requests\Image;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Contracts\Validation\Validator;
 
 class UpdateImageRequest extends FormRequest
 {
@@ -11,7 +13,7 @@ class UpdateImageRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -21,8 +23,40 @@ class UpdateImageRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
-            //
+        $rules = [
+            'path' => ['nullable','mimes:jpg,jpeg,png','max:2048'],
+        ];
+        return $rules;
+    }
+
+    /**
+     *  Get the error messages for the defined validation rules.
+     * 
+     *  @return array<string, string>
+     */
+    public function messages():array
+    {
+        return[
+            'path.mimes'    => 'The image must be a file of type: jpg,jpeg,png',
+            'path.max'      => 'The image size must not exceed 2 MB',
         ];
     }
+
+        /**
+     * Handle a failed validation attempt.
+     * 
+     * @param  \Illuminate\Validation\Validator  $validator
+     * 
+     * @return void
+     */
+    protected function failedValidation(Validator $validator){
+        throw new HttpResponseException(response()->json
+            ([
+                'success' => false,
+                'message' => 'Data validation error',
+                'errors'  => $validator->errors()
+            ] , 422));
+    }
+
 }
+
